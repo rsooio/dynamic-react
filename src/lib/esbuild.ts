@@ -37,22 +37,25 @@ function transformESMToReturn(code: string) {
   // 匹配 export {...} 语句
   // 例如：export { r as default, x as something };
   // 支持多行、多空格
-  return code.replace(/export\s*{\s*([^}]+)\s*};?/g, (_, exportsList) => {
-    // 找到 default 导出的变量
-    const matches = exportsList
-      .split(',')
-      .map((s) => s.trim())
-      .map((s) => {
-        // s 可能是 "r as default" 或 "x"
-        const m = s.match(/(\w+)\s+as\s+default/)
-        return m ? m[1] : null
-      })
-      .filter(Boolean)
+  return code.replace(
+    /export\s*{\s*([^}]+)\s*};?/g,
+    (_, exportsList: string) => {
+      // 找到 default 导出的变量
+      const matches = exportsList
+        .split(',')
+        .map((s) => s.trim())
+        .map((s) => {
+          // s 可能是 "r as default" 或 "x"
+          const m = s.match(/(\w+)\s+as\s+default/)
+          return m ? m[1] : null
+        })
+        .filter(Boolean)
 
-    if (matches.length === 0) return '' // 没有 default 导出，不替换
-    // 只返回第一个 default 导出的变量
-    return `return ${matches[0]};`
-  })
+      if (matches.length === 0) return '' // 没有 default 导出，不替换
+      // 只返回第一个 default 导出的变量
+      return `return ${matches[0]};`
+    },
+  )
 }
 
 export const bundle = async (contents: string) => {
