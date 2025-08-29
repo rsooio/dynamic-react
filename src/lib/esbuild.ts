@@ -58,18 +58,18 @@ function transformESMToReturn(code: string) {
   )
 }
 
-export const bundle = async (contents: string) => {
+export const bundle = async (
+  input: string,
+  options?: Parameters<typeof esbuild.transform>[1],
+) => {
   await loadEsbuild()
-  const result = await esbuild.transform(contents, {
+  const result = await esbuild.transform(input, {
     loader: 'tsx',
     format: 'esm',
     jsx: 'transform',
-    // jsxFactory: 'React.createElement',
-    // jsxFragment: 'React.Fragment',
     platform: 'browser',
     minify: true,
+    ...options,
   })
-  // return result.code
   return transformESMToReturn(result.code)
-  // return result.outputFiles[0].text
 }
