@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useEffect, useRef } from 'react'
+import React, {
+  createContext,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+} from 'react'
 import { generateTailwindCSS } from 'tailwindcss-iso'
 import { ErrorBoundary } from 'react-error-boundary'
 import * as LUCIDE from 'lucide-react'
@@ -13,7 +19,7 @@ const SHADCN = flatten(import.meta.glob('@/components/ui/*', { eager: true }))
 const baseEnv = { React, ...React, SHADCN, ...SHADCN, LUCIDE, cn }
 
 type ContextProps = {
-  addCode: (code: string) => string
+  addCode: (id: string, code: string) => void
   delCode: (id: string) => void
 }
 
@@ -45,10 +51,8 @@ export function DynamicComponentProvider({
     })()
   }, [codes])
 
-  const addCode = useCallback((code: string) => {
-    const id = crypto.randomUUID()
+  const addCode = useCallback((id: string, code: string) => {
     setCodes((prev) => ({ ...prev, [id]: code }))
-    return id
   }, [])
 
   const delCode = useCallback((id: string) => {
@@ -70,6 +74,7 @@ export function useDynamicComponent(
   code: string,
   env: Record<string, any> | null = null,
 ): React.FC<any> {
+  const id = useId()
   const context = React.useContext(DynamicComponentContext)
   if (!context) {
     throw new Error(
@@ -80,9 +85,9 @@ export function useDynamicComponent(
   const { addCode, delCode } = context
 
   useEffect(() => {
-    const id = addCode(code)
+    addCode(id, code)
     return () => delCode(id)
-  }, [code, addCode, delCode])
+  }, [id, code, addCode, delCode])
 
   return React.useMemo(() => {
     env = { ...baseEnv, ...env }
@@ -100,7 +105,7 @@ const ErrorFallback: React.ComponentType<FallbackProps> = () => {
   )
 }
 
-export function DynamicComponent(props: {
+function DynamicComponentInner(props: {
   code: string
   env?: Record<string, any>
   [key: string]: any
@@ -108,9 +113,19 @@ export function DynamicComponent(props: {
   const { code, env, ...rest } = props
   const Component = useDynamicComponent(code, env)
 
+  return <Component {...rest} />
+}
+
+export function DynamicComponent(props: {
+  code: string
+  env?: Record<string, any>
+  [key: string]: any
+}) {
+  const { code, env, ...rest } = props
+
   return (
     <ErrorBoundary resetKeys={[code]} FallbackComponent={ErrorFallback}>
-      <Component {...rest} />
+      <DynamicComponentInner code={code} env={env} {...rest} />
     </ErrorBoundary>
   )
 }
