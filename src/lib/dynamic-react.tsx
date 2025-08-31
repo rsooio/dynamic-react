@@ -1,10 +1,16 @@
 import React, { createContext, useCallback, useEffect, useRef } from 'react'
 import { generateTailwindCSS } from 'tailwindcss-iso'
 import { ErrorBoundary } from 'react-error-boundary'
-import * as SHADCN from '@/lib/shadcn'
 import * as LUCIDE from 'lucide-react'
+import { cn } from './utils'
+import type { FallbackProps } from 'react-error-boundary'
 
-const baseEnv = { React, ...React, SHADCN, ...SHADCN, LUCIDE }
+const flatten = (obj: Record<string, any>, n = 1) =>
+  n ? Object.fromEntries(Object.values(obj).flatMap(Object.entries)) : obj
+
+const SHADCN = flatten(import.meta.glob('@/components/ui/*', { eager: true }))
+
+const baseEnv = { React, ...React, SHADCN, ...SHADCN, LUCIDE, cn }
 
 type ContextProps = {
   addCode: (code: string) => string
@@ -84,7 +90,7 @@ export function useDynamicComponent(
   }, [code, env])
 }
 
-const ErrorFallback = ({}: { error: Error }) => {
+const ErrorFallback: React.ComponentType<FallbackProps> = () => {
   return (
     <div className="h-full w-full flex items-center justify-center">
       <div className="text-red-500">
