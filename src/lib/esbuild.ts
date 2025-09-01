@@ -69,7 +69,9 @@ export const bundle = async (
     jsx: 'transform',
     platform: 'browser',
     minify: true,
+    treeShaking: true,
+    charset: 'utf8',
     ...options,
   })
-  return transformESMToReturn(result.code)
+  return transformESMToReturn(result.code.trim())
 }
